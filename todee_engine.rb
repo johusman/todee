@@ -1,4 +1,5 @@
 require 'todee_instructions'
+require 'todee_code_utils'
 
 class Context
   attr_reader :instruction_pointer, :stopped, :bounds
@@ -55,16 +56,19 @@ private
 end
 
 class Engine
+  include CodeUtils
+  
   def initialize(socket_manager)
     @socket_manager = socket_manager
-    @instructions = { :TUR => TURInstruction.new, :TNR => TPLUSCInstruction.new, :TNL => TMINUSCInstruction.new,
-                      :ADD => ADDInstruction.new, :SUB => SUBInstruction.new, :MUL => MULInstruction.new,
-                      :DIV => DIVInstruction.new, :NEG => NEGInstruction.new, :MOV => MOVInstruction.new,
-                      :AND => ANDInstruction.new, :OR => ORInstruction.new, :XOR => XORInstruction.new,
-                      :NOT => NOTInstruction.new, :EQ => EQInstruction.new, :NEQ => NEQInstruction.new,
-                      :LT => LTInstruction.new, :GT => LTInstruction.new, :STP => STPInstruction.new,
-                      :NOP => NOPInstruction.new
-                    }
+#     @instructions = { :TUR => TURInstruction.new, :TNR => TPLUSCInstruction.new, :TNL => TMINUSCInstruction.new,
+#                       :ADD => ADDInstruction.new, :SUB => SUBInstruction.new, :MUL => MULInstruction.new,
+#                       :DIV => DIVInstruction.new, :NEG => NEGInstruction.new, :MOV => MOVInstruction.new,
+#                       :AND => ANDInstruction.new, :OR => ORInstruction.new, :XOR => XORInstruction.new,
+#                       :NOT => NOTInstruction.new, :EQ => EQInstruction.new, :NEQ => NEQInstruction.new,
+#                       :LT => LTInstruction.new, :GT => LTInstruction.new, :STP => STPInstruction.new,
+#                       :NOP => NOPInstruction.new
+#                     }
+    @NOP = NOPInstruction.new
   end
   
   def execute_all(code)
@@ -72,13 +76,15 @@ class Engine
     while not @context.stopped do
       execute(code[@context.instruction_pointer[0]][@context.instruction_pointer[1]])
       @context.advance()
-      sleep(0.05)
+      sleep(0.01)
     end
   end
   
 private  
   def execute(code_point)
-    instruction = @instructions[code_point.instruction_symbol] or NOPInstruction.new
+    instruction = code_point.instruction_symbol ? get_instruction(code_point.instruction_symbol) : @NOP
+    raise "#{code_point.instruction_symbol} is not a valid instruction!" if not instruction
+    
     arguments = code_point.arguments.map {|arg| if arg.is_ref? then @socket_manager[arg.value] else arg.value end }
     return_value = instruction.execute(@context, arguments[0], arguments[1])
     if code_point.reference then

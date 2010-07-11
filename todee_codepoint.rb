@@ -11,6 +11,8 @@ class CodePoint
     arg_str = arguments.map { |value| if value then value.to_s else '_' end }.join(" ")
     "<#{@instruction_symbol} #{if @reference then @reference.to_s else '_' end } #{arg_str}>"
   end
+  
+  NOP = CodePoint.new(:NOP, nil, [])
 end
 
 class Argument
