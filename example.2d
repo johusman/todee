@@ -1,0 +1,27 @@
+# mov is an Instruction
+# it takes two Arguments
+# the first argument is a Target
+# non-target arguments are called Parameters (should perhaps be called Sources?)
+
+# A rather stupid Hello World program, provided the following context:
+#  0 = stdout
+#  1 = stack socket
+#  2 = memory socket
+
+mov %1, 10      # Single line feed for unix systems
+mov %1, '!'
+mov %1, 'd'
+mov %1, 'l'
+mov %1, 'r'
+mov %1, 'o'
+mov %1, 'w'
+mov %1, ' '
+mov %1, 'o'
+mov %1, 'l'
+mov %1, 'l'
+mov %1, 'e'
+mov %1, 'h'
+TUR 0		TNL 1
+mov %2, %1	mov %0, %2
+TNL %2		TNL 1
+STP 
