@@ -1,7 +1,7 @@
 require 'todee_instructions'
 require 'todee_code_utils'
 
-class Context
+class ExecutionContext
   attr_reader :instruction_pointer, :stopped, :bounds
   
   def initialize(bounds)
@@ -60,19 +60,11 @@ class Engine
   
   def initialize(socket_manager)
     @socket_manager = socket_manager
-#     @instructions = { :TUR => TURInstruction.new, :TNR => TPLUSCInstruction.new, :TNL => TMINUSCInstruction.new,
-#                       :ADD => ADDInstruction.new, :SUB => SUBInstruction.new, :MUL => MULInstruction.new,
-#                       :DIV => DIVInstruction.new, :NEG => NEGInstruction.new, :MOV => MOVInstruction.new,
-#                       :AND => ANDInstruction.new, :OR => ORInstruction.new, :XOR => XORInstruction.new,
-#                       :NOT => NOTInstruction.new, :EQ => EQInstruction.new, :NEQ => NEQInstruction.new,
-#                       :LT => LTInstruction.new, :GT => LTInstruction.new, :STP => STPInstruction.new,
-#                       :NOP => NOPInstruction.new
-#                     }
     @NOP = NOPInstruction.new
   end
   
   def execute_all(code)
-    @context = Context.new([code.size, code[0].size])
+    @context = ExecutionContext.new([code.size, code[0].size])
     while not @context.stopped do
       execute(code[@context.instruction_pointer[0]][@context.instruction_pointer[1]])
       @context.advance()

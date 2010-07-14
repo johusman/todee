@@ -1,0 +1,6 @@
+Context:
+  0-1: Memory
+  2:   Queue(max_size:10)
+  3,5: Stdio
+  4:   NetworkOut(host:localhost, port:80)
+  6:   NetworkIn(port:2562)

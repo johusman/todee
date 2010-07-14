@@ -22,6 +22,20 @@ class MemorySocket
   end
 end
 
+class QueueSocket
+  def initialize()
+    @queue = []
+  end
+  
+  def read()
+    @queue.pop()
+  end
+  
+  def write(value)
+    @queue.unshift(value)
+  end
+end
+
 class NullSocket
   def read()
     nil
@@ -42,6 +56,34 @@ class StdoutSocket
   end
 end
 
+class StdinSocket
+  def read()
+    return $stdin.getc
+  end
+  
+  def write(value)
+  end
+end
+
+class StdioSocket
+  def read()
+    return $stdin.getc
+  end
+  
+  def write(value)
+    $stdout.write(value.to_i.chr)
+    $stdout.flush
+  end
+end
+
+# To be done...
+class NetworkOutSocket
+end
+
+class NetworkInSocket
+end
+
+
 class SocketManager
   def initialize()
     @sockets = []
@@ -53,6 +95,10 @@ class SocketManager
   
   def socket(address)
     @sockets[address.to_i] or NullSocket.new
+  end
+  
+  def sockets()
+    return Array.new(@sockets)
   end
   
   def read(address)
