@@ -93,21 +93,21 @@ describe Instruction, "various instructions" do
     TURInstruction.new.execute(context_mock, 1, nil)
   end
   
-  it "should handle TPLUSC" do
+  it "should handle TNR" do
     context_mock = mock("context when true")
     context_mock.should_receive(:turn_right)
-    TPLUSCInstruction.new.execute(context_mock, 1, nil)
+    TNRInstruction.new.execute(context_mock, 1, nil)
     context_mock = mock("context when false")
     context_mock.should_not_receive(:turn_right)
-    TPLUSCInstruction.new.execute(context_mock, 0, nil)
+    TNRInstruction.new.execute(context_mock, 0, nil)
   end
   
-  it "should handle TMINUSC" do
+  it "should handle TNL" do
     context_mock = mock("context when true")
     context_mock.should_receive(:turn_left)
-    TMINUSCInstruction.new.execute(context_mock, 1, nil)
+    TNLInstruction.new.execute(context_mock, 1, nil)
     context_mock = mock("context when false")
     context_mock.should_not_receive(:turn_left)
-    TMINUSCInstruction.new.execute(context_mock, 0, nil)
+    TNLInstruction.new.execute(context_mock, 0, nil)
   end
 end

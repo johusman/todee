@@ -66,8 +66,6 @@ describe TodeeParser, "parsing broken single code points" do
   end
   
   it "should fail on too few arguments" do
-    #lambda { @parser.consume_code_point("add %1, 2 TUR 0") }.should raise_error(TodeeParseException)
-    
     test_fail { @parser.consume_code_point("add %1, 2 TUR 0") }
   end
 
@@ -135,7 +133,7 @@ describe TodeeParser, "parsing whole file" do
   
   it "should parse hello world" do
     file = <<EOF
-      # A rather stupid Hello World program, provided the following context:
+      # A rather stupid Hello World program, provided the following environment:
       #  0 = stdout
       #  1 = stack socket
       #  2 = memory socket

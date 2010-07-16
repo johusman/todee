@@ -58,8 +58,8 @@ end
 class Engine
   include CodeUtils
   
-  def initialize(socket_manager)
-    @socket_manager = socket_manager
+  def initialize(environment)
+    @environment = environment
     @NOP = NOPInstruction.new
   end
   
@@ -77,10 +77,16 @@ private
     instruction = code_point.instruction_symbol ? get_instruction(code_point.instruction_symbol) : @NOP
     raise "#{code_point.instruction_symbol} is not a valid instruction!" if not instruction
     
-    arguments = code_point.arguments.map {|arg| if arg.is_ref? then @socket_manager[arg.value] else arg.value end }
+    arguments = code_point.arguments.map do |arg|
+      if arg.is_ref? then
+        @environment[arg.value]
+      else
+        arg.value
+      end
+    end
     return_value = instruction.execute(@context, arguments[0], arguments[1])
     if code_point.reference then
-      @socket_manager[code_point.reference] = return_value
+      @environment[code_point.reference] = return_value
     end
   end
 end

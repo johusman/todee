@@ -3,7 +3,7 @@
 # the first argument is a Target
 # non-target arguments are called Parameters (should perhaps be called Sources?)
 
-# A rather stupid Hello World program, provided the following context:
+# A rather stupid Hello World program, provided the following environment:
 #  0 = stdout
 #  1 = stack socket
 #  2 = memory socket

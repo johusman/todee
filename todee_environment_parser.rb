@@ -1,9 +1,10 @@
 require 'todee_sockets'
+require 'todee_environment'
 require 'yaml'
 
-class TodeeContextParseException < Exception; end
+class TodeeEnvironmentParseException < Exception; end
 
-class TodeeContextParser
+class TodeeEnvironmentParser
   def initialize()
     @socket_types = {
         'null'       => NullSocket,
@@ -19,23 +20,23 @@ class TodeeContextParser
   end
   
   def parse_file(string)
-    manager = SocketManager.new
+    environment = TodeeEnvironment.new
     
     yaml = YAML::load(string)
-    context_hash = yaml['Context']
-    if not context_hash then
-      raise TodeeContextParseException, "Missing top level key 'Context' in context file"
+    env_hash = yaml['TodeeEnvironment']
+    if not env_hash then
+      raise TodeeEnvironmentParseException, "Missing top level key 'TodeeEnvironment' in environment file"
     end
-    context_hash.each_pair do |key, value|
+    env_hash.each_pair do |key, value|
       socket_type = @socket_types[value.downcase]
       
       if not socket_type then
-        raise TodeeContextParseException, "Unknown socket type #{value}"
+        raise TodeeEnvironmentParseException, "Unknown socket type #{value}"
       end
       
-      manager.register_socket(socket_type.new, key.to_i)
+      environment.register_socket(socket_type.new, key.to_i)
     end
     
-    return manager
+    return environment
   end
 end
