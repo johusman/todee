@@ -77,16 +77,11 @@ private
     instruction = code_point.instruction_symbol ? get_instruction(code_point.instruction_symbol) : @NOP
     raise "#{code_point.instruction_symbol} is not a valid instruction!" if not instruction
     
-    arguments = code_point.arguments.map do |arg|
-      if arg.is_ref? then
-        @environment[arg.value]
-      else
-        arg.value
-      end
-    end
+    arguments = code_point.arguments.map {|arg| @environment.deref_read(arg.value, arg.ref_level) }
     return_value = instruction.execute(@context, arguments[0], arguments[1])
-    if code_point.reference then
-      @environment[code_point.reference] = return_value
+    target = code_point.target
+    if target then
+      @environment.deref_write(target.value, target.ref_level, return_value)
     end
   end
 end

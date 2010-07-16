@@ -54,3 +54,57 @@ describe TodeeEnvironment, "handling socket communication" do
     @environment[1].should == 789
   end
 end
+
+describe TodeeEnvironment, "dereferencing arguments" do
+  before do
+    @environment = TodeeEnvironment.new
+    @environment.register_socket(MemorySocket.new, 0)
+    @environment.register_socket(MemorySocket.new, 1)
+    @environment.register_socket(MemorySocket.new, 2)
+    @environment.register_socket(MemorySocket.new, 3)
+    
+    @environment.write(0, 13)
+    @environment.write(1, 37)
+    @environment.write(2, 71)
+    @environment.write(3, 1)
+  end
+  
+  it "should pass constants right through when reading" do
+    @environment.deref_read(44, 0).should == 44
+  end
+  
+  it "should dereference one level when reading" do
+    @environment.deref_read(2, 1).should == 71
+  end
+  
+  it "should dereference two levels when reading" do
+    @environment.deref_read(3, 2).should == 37
+  end
+  
+  it "should dereference undefined addresses as if they referred to 0 when reading" do
+    @environment.deref_read(5, 1).should == 0
+    @environment.deref_read(5, 2).should == 13 # cause we get %%5 -> %0 -> 31
+  end
+
+  it "should ignore constants when writing" do
+    @environment.deref_write(44, 0, 9999)
+    [0, 1, 2, 3].map {|x| @environment.read(x)}.should == [13, 37, 71, 1]
+  end
+  
+  it "should dereference one level when writing" do
+    @environment.deref_write(2, 1, 9999)
+    [0, 1, 2, 3].map {|x| @environment.read(x)}.should == [13, 37, 9999, 1]
+  end
+  
+  it "should dereference two levels when writing" do
+    @environment.deref_write(3, 2, 9999)
+    [0, 1, 2, 3].map {|x| @environment.read(x)}.should == [13, 9999, 71, 1]
+  end
+  
+  it "should ignore undefined addresses when writing" do
+    @environment.deref_write(5, 1, 9999)
+    [0, 1, 2, 3].map {|x| @environment.read(x)}.should == [13, 37, 71, 1]
+    @environment.deref_write(5, 2, 9999)
+    [0, 1, 2, 3].map {|x| @environment.read(x)}.should == [13, 37, 71, 1]
+  end
+end

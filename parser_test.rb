@@ -9,27 +9,40 @@ describe TodeeParser, "parsing normal single code points" do
     cp, leftover = @parser.consume_code_point("add %1, 2, 3")
     leftover.should == ""
     cp.instruction_symbol.should == :ADD
-    cp.reference.should == 1
+    cp.target.value.should == 1
+    cp.target.ref_level.should == 1
     cp.arguments.map{|arg| arg.value }.should == [2, 3]
-    cp.arguments.map{|arg| arg.is_ref? }.should == [false, false]
+    cp.arguments.map{|arg| arg.ref_level }.should == [0, 0]
   end
   
   it "should parse an ADD with references" do
     cp, leftover = @parser.consume_code_point("add %1, %2, %3")
     leftover.should == ""
     cp.instruction_symbol.should == :ADD
-    cp.reference.should == 1
+    cp.target.value.should == 1
+    cp.target.ref_level.should == 1
     cp.arguments.map{|arg| arg.value }.should == [2, 3]
-    cp.arguments.map{|arg| arg.is_ref? }.should == [true, true]
+    cp.arguments.map{|arg| arg.ref_level }.should == [1, 1]
   end
+  
+  it "should parse an ADD with metareferences" do
+    cp, leftover = @parser.consume_code_point("add %%1, %%2, %%3")
+    leftover.should == ""
+    cp.instruction_symbol.should == :ADD
+    cp.target.value.should == 1
+    cp.target.ref_level.should == 2
+    cp.arguments.map{|arg| arg.value }.should == [2, 3]
+    cp.arguments.map{|arg| arg.ref_level }.should == [2, 2]
+  end  
   
   it "should parse character arguments" do
     cp, leftover = @parser.consume_code_point("add %1, 'h', 'j'")
     leftover.should == ""
     cp.instruction_symbol.should == :ADD
-    cp.reference.should == 1
+    cp.target.value.should == 1
+    cp.target.ref_level.should == 1
     cp.arguments.map{|arg| arg.value }.should == [104, 106]
-    cp.arguments.map{|arg| arg.is_ref? }.should == [false, false]
+    cp.arguments.map{|arg| arg.ref_level }.should == [0, 0]
   end
 
   it "should return additional code points as leftovers" do
@@ -41,18 +54,19 @@ describe TodeeParser, "parsing normal single code points" do
     cp, leftover = @parser.consume_code_point(" add  %1 ,  %2  , %3 ")
     leftover.strip.should == ""
     cp.instruction_symbol.should == :ADD
-    cp.reference.should == 1
+    cp.target.value.should == 1
+    cp.target.ref_level.should == 1
     cp.arguments.map{|arg| arg.value }.should == [2, 3]
-    cp.arguments.map{|arg| arg.is_ref? }.should == [true, true]
+    cp.arguments.map{|arg| arg.ref_level }.should == [1, 1]
   end
   
   it "should manage instructions with no target" do
     cp, leftover = @parser.consume_code_point("TUR 4")
     leftover.strip.should == ""
     cp.instruction_symbol.should == :TUR
-    cp.reference.should == nil
+    cp.target.should == nil
     cp.arguments.map{|arg| arg.value }.should == [4]
-    cp.arguments.map{|arg| arg.is_ref? }.should == [false]
+    cp.arguments.map{|arg| arg.ref_level }.should == [0]
   end
 end
 
@@ -100,27 +114,31 @@ describe TodeeParser, "parsing whole line" do
   end
   
   it "should parse two simple code points" do
-    cp1, cp2 = @parser.parse_code_points("add %1, 2, 3\tmov %4, %1")
+    cp1, cp2 = @parser.parse_code_points("add %%1, 2, 3\tmov %4, %1")
     
     cp1.instruction_symbol.should == :ADD
-    cp1.reference.should == 1
+    cp1.target.value.should == 1
+    cp1.target.ref_level.should == 2
     cp1.arguments.map{|arg| arg.value }.should == [2, 3]
-    cp1.arguments.map{|arg| arg.is_ref? }.should == [false, false]
+    cp1.arguments.map{|arg| arg.ref_level }.should == [0, 0]
     
     cp2.instruction_symbol.should == :MOV
-    cp2.reference.should == 4
+    cp2.target.value.should == 4
+    cp2.target.ref_level.should == 1
     cp2.arguments.map{|arg| arg.value }.should == [1]
-    cp2.arguments.map{|arg| arg.is_ref? }.should == [true]
+    cp2.arguments.map{|arg| arg.ref_level }.should == [1]
   end
   
   it "should ignore comments" do
     cps = @parser.parse_code_points("add %1, 2, 3 # add some stuff")
     cps.size.should == 1
+    cp = cps[0]
     
-    cps[0].instruction_symbol.should == :ADD
-    cps[0].reference.should == 1
-    cps[0].arguments.map{|arg| arg.value }.should == [2, 3]
-    cps[0].arguments.map{|arg| arg.is_ref? }.should == [false, false]
+    cp.instruction_symbol.should == :ADD
+    cp.target.value.should == 1
+    cp.target.ref_level.should == 1
+    cp.arguments.map{|arg| arg.value }.should == [2, 3]
+    cp.arguments.map{|arg| arg.ref_level }.should == [0, 0]
     
     @parser.parse_code_points("# just a comment").size.should == 0
   end

@@ -73,9 +73,9 @@ class TodeeParser
       end
       target = parse_param(target_param) 
       if not target then
-        raise_error "Argument #{target_param} is not a valid argument (should be [%]<number> or '<character>')", string
+        raise_error "Argument #{target_param} is not a valid argument (should be [%[%]]<number> or '<character>')", string
       end
-      if target and not target.is_ref? then
+      if target and target.ref_level == 0 then
         raise_error "First argument to instruction '#{op}' is a target and must therefore be a reference, but was: '#{target_param}'", string
       end
     end
@@ -87,13 +87,13 @@ class TodeeParser
     args = params.map do |param|
       parsed = parse_param(param)
       if not parsed then
-        raise_error "Argument #{param} is not a valid argument (should be [%]<number> or '<character>')", string
+        raise_error "Argument #{param} is not a valid argument (should be [%[%]]<number> or '<character>')", string
       else
         parsed
       end
     end
     
-    return [CodePoint.new(op, target ? target.value : nil, args), work_string]
+    return [CodePoint.new(op, target, args), work_string]
   end
 private
 
@@ -112,7 +112,6 @@ private
   end
   
   def consume_parameter(string)
-    #match = string.match(/^\s*(((%|-)?[0-9]+)|('[^']?'))(.*)/)
     match = string.match(/^\s*(([%\-0-9]+)|('[^']?'))(.*)/)
     if match then
       return [match[1], match[4]]
@@ -143,15 +142,21 @@ private
   def parse_param(param)
     param = param.strip
     
-    if not param.match(/^((%|-)?[0-9]+)|('[^']?')$/) then
+    if not param.match(/^((%{1,2}|-)?[0-9]+)|('[^']?')$/) then
       return nil
     end
     
-    is_ref = false
-    ref_match = param.match(/^%(.*)/)
-    if ref_match then
-      is_ref = true
-      param = ref_match[1]
+    ref_level = 0
+    metaref_match = param.match(/^%%(.*)/)
+    if metaref_match then
+      ref_level = 2
+      param = metaref_match[1]
+    else
+      ref_match = param.match(/^%(.*)/)
+      if ref_match then
+        ref_level = 1
+        param = ref_match[1]
+      end
     end
     
     quote_match = param.match(/^'([^']?)'$/)
@@ -165,6 +170,6 @@ private
     
     return nil if not param.match(/^-?[0-9]+$/)
     
-    return Argument.new(param.to_i, is_ref)
+    return Argument.new(param.to_i, ref_level)
   end
 end

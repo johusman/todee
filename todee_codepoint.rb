@@ -1,34 +1,30 @@
 class CodePoint
-  attr_reader :instruction_symbol, :reference, :arguments
+  attr_reader :instruction_symbol, :target, :arguments
   
-  def initialize(instruction_symbol, reference, arguments)
+  def initialize(instruction_symbol, target, arguments)
     @instruction_symbol = instruction_symbol
-    @reference = reference
+    @target = target
     @arguments = arguments
   end
   
   def to_s()
     arg_str = arguments.map { |value| if value then value.to_s else '_' end }.join(" ")
-    "<#{@instruction_symbol} #{if @reference then @reference.to_s else '_' end } #{arg_str}>"
+    "<#{@instruction_symbol} #{@target.to_s if @target.to_s} #{arg_str}>"
   end
   
   NOP = CodePoint.new(:NOP, nil, [])
 end
 
 class Argument
-  attr_reader :value
+  attr_reader :value, :ref_level
   
-  def initialize(value, is_ref)
+  def initialize(value, ref_level)
     @value = value
-    @is_ref = is_ref
-  end
-  
-  def is_ref?()
-    return @is_ref
+    @ref_level = ref_level
   end
   
   def to_s()
-    if @is_ref then "&#{value}" else "#{value}" end
+    "#{'%' * @ref_level}#{value}"
   end
 end
 
