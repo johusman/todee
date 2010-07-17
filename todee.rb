@@ -12,4 +12,6 @@ environment = TodeeEnvironmentParser.new.parse_file(File.new(ARGV[0]))
 code = TodeeParser.new.parse_file(File.new(ARGV[1]))
 
 engine = Engine.new(environment)
-engine.execute_all(code)
+num = engine.execute_all(code)
+
+puts "Executed #{num} instructions"

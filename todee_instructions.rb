@@ -85,6 +85,15 @@ class DIVInstruction < Instruction
   def num_args() 2; end
 end
 
+class REMInstruction < Instruction
+  def execute(context, value1, value2)
+    int(value1).remainder(int(value2))
+  end
+
+  def takes_target() true; end
+  def num_args() 2; end
+end
+
 class NEGInstruction < Instruction
   def execute(context, value, dummy)
     -int(value)

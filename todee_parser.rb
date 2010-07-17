@@ -55,6 +55,7 @@ class TodeeParser
       raise_error "Expected instruction name at the beginning of '#{work_string}'", string
     end
     
+    op = 'NOP' if op.strip == '.'
     op = op.upcase.strip.to_sym
     
     instruction = get_instruction(op)
@@ -103,9 +104,9 @@ private
   end
 
   def consume_op(string)
-    match = string.match(/^(\w+)\s*(.*)/)
+    match = string.match(/^([.]|(\w+))\s*(.*)/)
     if match then
-      return [match[1], match[2]]
+      return [match[1], match[3]]
     else
       return [nil, string]
     end

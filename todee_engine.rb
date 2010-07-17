@@ -10,6 +10,7 @@ class ExecutionContext
     @stopped = false
     @bounds = bounds
     
+    # 0 = down, 1 = right, 2 = up, 3 = left
     @directions = [[1, 0], [0, 1], [-1, 0], [0, -1]] # row, column
   end
   
@@ -35,7 +36,7 @@ class ExecutionContext
   def advance()
     advance_one_dimension(0)
     advance_one_dimension(1)
-    #puts "Now at row #{@instruction_pointer[0]}, col #{@instruction_pointer[1]} with bounds rows #{@bounds[0]}, cols #{@bounds[1]}"
+    #puts "at: #{@instruction_pointer[0]}, #{@instruction_pointer[1]}"
   end
   
   def reset()
@@ -65,11 +66,15 @@ class Engine
   
   def execute_all(code)
     @context = ExecutionContext.new([code.size, code[0].size])
+    instructions_executed = 0
     while not @context.stopped do
       execute(code[@context.instruction_pointer[0]][@context.instruction_pointer[1]])
       @context.advance()
-      sleep(0.01)
+      #sleep(0.01)
+      instructions_executed += 1
     end
+    
+    return instructions_executed
   end
   
 private  

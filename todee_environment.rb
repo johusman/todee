@@ -18,11 +18,14 @@ class TodeeEnvironment
   end
   
   def read(address)
-    socket(address).read()
+    value = socket(address).read()
+    #$stderr.puts "read #{value} from %#{address}"
+    return value
   end
   
   def write(address, value)
     socket(address).write(value)
+    #$stderr.puts "wrote #{value} to %#{address}"
   end
   
   def [](address)

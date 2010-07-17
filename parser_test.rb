@@ -68,6 +68,25 @@ describe TodeeParser, "parsing normal single code points" do
     cp.arguments.map{|arg| arg.value }.should == [4]
     cp.arguments.map{|arg| arg.ref_level }.should == [0]
   end
+  
+  it "should parse dot as NOP" do
+    cp, leftover = @parser.consume_code_point(".")
+    leftover.strip.should == ""
+    cp.instruction_symbol.should == :NOP
+    cp.target.should == nil
+    cp.arguments.size.should == 0
+  end
+  
+  it "should not misinterpret character quoted dot" do
+    cp, leftover = @parser.consume_code_point("mov %1, '.'")
+    leftover.strip.should == ""
+    cp.instruction_symbol.should == :MOV
+    cp.target.value.should == 1
+    cp.target.ref_level.should == 1
+    cp.arguments.map{|arg| arg.value }.should == [46]
+    cp.arguments.map{|arg| arg.ref_level }.should == [0]
+  end
+  
 end
 
 describe TodeeParser, "parsing broken single code points" do
@@ -105,7 +124,12 @@ describe TodeeParser, "parsing broken single code points" do
   
   it "should not accept comma after op code" do
     test_fail { @parser.consume_code_point("MOV, %1, %2 TUR 0") }
-  end    
+  end
+  
+  it "should fail on misplaced dots" do
+    test_fail { @parser.consume_code_point("MOV ., %3, %1") }
+    test_fail { @parser.consume_code_point("MOV .") }
+  end  
 end
 
 describe TodeeParser, "parsing whole line" do
@@ -128,6 +152,24 @@ describe TodeeParser, "parsing whole line" do
     cp2.arguments.map{|arg| arg.value }.should == [1]
     cp2.arguments.map{|arg| arg.ref_level }.should == [1]
   end
+  
+  it "should not be confused by dots" do
+    cp0, cp1, cp2 = @parser.parse_code_points(".\tadd %%1, 2, 3\tmov %4, %1")
+
+    cp0.instruction_symbol.should == :NOP
+
+    cp1.instruction_symbol.should == :ADD
+    cp1.target.value.should == 1
+    cp1.target.ref_level.should == 2
+    cp1.arguments.map{|arg| arg.value }.should == [2, 3]
+    cp1.arguments.map{|arg| arg.ref_level }.should == [0, 0]
+    
+    cp2.instruction_symbol.should == :MOV
+    cp2.target.value.should == 4
+    cp2.target.ref_level.should == 1
+    cp2.arguments.map{|arg| arg.value }.should == [1]
+    cp2.arguments.map{|arg| arg.ref_level }.should == [1]
+  end  
   
   it "should ignore comments" do
     cps = @parser.parse_code_points("add %1, 2, 3 # add some stuff")
