@@ -86,6 +86,62 @@ describe TodeeParser, "parsing normal single code points" do
     cp.arguments.map{|arg| arg.value }.should == [46]
     cp.arguments.map{|arg| arg.ref_level }.should == [0]
   end
+
+  it "should translate alias |^|" do
+    cp, leftover = @parser.consume_code_point("|^| NOP")
+    leftover.should == "NOP"
+    cp.instruction_symbol.should == :TUR
+    cp.target.should == nil
+    cp.arguments.map{|arg| arg.value }.should == [2]
+    cp.arguments.map{|arg| arg.ref_level }.should == [0]
+  end  
+
+  it "should translate alias |>|" do
+    cp, leftover = @parser.consume_code_point("|>| NOP")
+    leftover.should == "NOP"
+    cp.instruction_symbol.should == :TUR
+    cp.target.should == nil
+    cp.arguments.map{|arg| arg.value }.should == [1]
+    cp.arguments.map{|arg| arg.ref_level }.should == [0]
+  end    
+
+  it "should translate alias |v|" do
+    cp, leftover = @parser.consume_code_point("|v| NOP")
+    leftover.should == "NOP"
+    cp.instruction_symbol.should == :TUR
+    cp.target.should == nil
+    cp.arguments.map{|arg| arg.value }.should == [0]
+    cp.arguments.map{|arg| arg.ref_level }.should == [0]
+  end    
+  
+  it "should translate alias |>|" do
+    cp, leftover = @parser.consume_code_point("|<| NOP")
+    leftover.should == "NOP"
+    cp.instruction_symbol.should == :TUR
+    cp.target.should == nil
+    cp.arguments.map{|arg| arg.value }.should == [3]
+    cp.arguments.map{|arg| arg.ref_level }.should == [0]
+  end
+  
+  it "should treat stars (*) as whitespace" do
+    cp, leftover = @parser.consume_code_point("add %1, *%2, %3**TUR*0")
+    leftover.strip.should == "TUR 0"
+    cp.instruction_symbol.should == :ADD
+    cp.target.value.should == 1
+    cp.target.ref_level.should == 1
+    cp.arguments.map{|arg| arg.value }.should == [2, 3]
+    cp.arguments.map{|arg| arg.ref_level }.should == [1, 1]
+  end
+  
+  it "should not misinterpret character quoted star (*)" do
+    cp, leftover = @parser.consume_code_point("mov %1, '*'")
+    leftover.strip.should == ""
+    cp.instruction_symbol.should == :MOV
+    cp.target.value.should == 1
+    cp.target.ref_level.should == 1
+    cp.arguments.map{|arg| arg.value }.should == [42]
+    cp.arguments.map{|arg| arg.ref_level }.should == [0]
+  end
   
 end
 

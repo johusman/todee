@@ -6,6 +6,16 @@ class TodeeParseException < Exception; end
 class TodeeParser
   include CodeUtils
   
+  def initialize()
+    @aliases = {
+        "." => CodePoint.new(:NOP, nil, []),
+        "|V|" => CodePoint.new(:TUR, nil, [Argument.new(0, 0)]),
+        "|>|" => CodePoint.new(:TUR, nil, [Argument.new(1, 0)]),
+        "|^|" => CodePoint.new(:TUR, nil, [Argument.new(2, 0)]),
+        "|<|" => CodePoint.new(:TUR, nil, [Argument.new(3, 0)])
+      }
+  end
+  
   def parse_file(file)
     if not file.respond_to?("each_line") then
       raise ArgumentError, "Unknown argument type #{file.type}. Must support each_line()"
@@ -45,7 +55,7 @@ class TodeeParser
   end
   
   def consume_code_point(string)
-    work_string = string.strip
+    work_string = string.gsub(/(?!')[*](?!')/, ' ').strip
     if work_string.match(/^\s*#/) then
       return [nil, nil] # line is a comment
     end
@@ -55,8 +65,11 @@ class TodeeParser
       raise_error "Expected instruction name at the beginning of '#{work_string}'", string
     end
     
-    op = 'NOP' if op.strip == '.'
-    op = op.upcase.strip.to_sym
+    op = op.upcase.strip
+    
+    return [@aliases[op], work_string] if @aliases[op]
+    
+    op = op.to_sym
     
     instruction = get_instruction(op)
     
@@ -104,7 +117,7 @@ private
   end
 
   def consume_op(string)
-    match = string.match(/^([.]|(\w+))\s*(.*)/)
+    match = string.match(/^([.]|([\w|^V<>]+))\s*(.*)/)
     if match then
       return [match[1], match[3]]
     else
