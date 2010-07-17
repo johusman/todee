@@ -1,0 +1,78 @@
+# read target from stdin to %3
+mov %3, 0
+TUR 0           TUR 3
+mov %1, %0      
+gt  %4, %1, 47  sub %3, %3, 48
+lt  %5, %1, 58  add %3, %3, %1
+and %4, %5, %4  mul %3, %3, 10
+TNR %4          TUR 2
+
+# if value is less than 4, it is prime
+lt  %4, %3, 4
+TNL %4         .                .               .               .               TUR 0
+
+# init queue with first two primes and a guard value (0)
+mov %2, 2
+mov %2, 3
+mov %2, 0
+
+mov %1, 4
+
+# outer for loop on %1
+TUR 1           TUR 0
+.               mov %5, 0 # reset flag
+
+.               # loop through primes in queue to see if we are divisible
+.               TUR 1           TUR 0
+.               .               mov %4, %2
+.               .               mov %2, %4
+.               .               # hijacking %5
+.               .               mul %5, %4, %4
+.               .               gt  %5, %5, %1
+.               .               TNL %5          TUR 0
+.               .               # if guard, we are prime
+.               .               eq  %5, %4, 0
+.               .               TNL %5          .               TUR 0
+.               .               # hijacking %4
+.               .               rem %4, %1, %4
+.               TUR 2           TNR %4
+.               # end of prime loop
+.               .               TUR 0           TUR 3
+.               # loop through remaining queue items
+.               TUR 1           TUR 0
+.               mov %2, %4      mov %4, %2
+.               TUR 2           TNR %4
+.               # end of queue loop, readd zero and maybe new prime
+.               .               TUR 0           .               TUR 3
+.               TUR 0           TNR %5          
+.               mov %2, %1                                
+.               TUR 0           TUR 3
+.               mov %2, 0
+                # skip to target-1 if %1 > sqrt(%3)
+.               mul %4, %1, %1
+.               gt  %4, %4, %3
+.               TNL %4          TUR 0
+.               .               eq  %4, %1, %3
+.               TUR 0           TNR %4
+.               .               mov %1, %3
+.               .               sub %1, %1, 1
+.               TUR 0           TUR 3
+
+add %1, %1, 1   lt  %4, %1, %3
+TUR 2           TNR %4
+TUR 0           TUR 3
+# end of outer loop
+
+TNL %5          .               .               .               .               TUR 0
+mov %0, 'n'     
+mov %0, 'o'     
+mov %0, 't'     
+mov %0, ' '     
+TUR 0           .               .               .               .               TUR 3
+mov %0, 'p'
+mov %0, 'r'
+mov %0, 'i'
+mov %0, 'm'
+mov %0, 'e'
+mov %0, 10
+STP

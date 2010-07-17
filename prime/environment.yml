@@ -1,0 +1,7 @@
+TodeeEnvironment:
+  0: Stdio
+  1: Memory # index
+  2: Queue  # computed primes
+  3: Memory # target value
+  4: Memory # working buffer
+  5: Memory # prime flag
