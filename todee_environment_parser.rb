@@ -9,6 +9,7 @@ class TodeeEnvironmentParser
     @socket_types = {
         'null'       => NullSocket,
         'memory'     => MemorySocket,
+        'scope'      => ScopeMemorySocket,
         'stack'      => StackSocket,
         'stdout'     => StdoutSocket,
         'stdin'      => StdinSocket,
@@ -34,7 +35,22 @@ class TodeeEnvironmentParser
         raise TodeeEnvironmentParseException, "Unknown socket type #{value}"
       end
       
-      environment.register_socket(socket_type.new, key.to_i)
+      if key.to_s.match(/^\s*[0-9]+\s*$/) then
+        environment.register_socket(socket_type.new, key.to_i)
+      elsif key.to_s.match(/^\s*[0-9]+-[0-9]+\s*$/) then
+        match = key.match(/^\s*([0-9]+)-([0-9]+)\s*$/)
+        start = match[1].to_i
+        stop  = match[2].to_i
+        if start > stop then
+          raise TodeeEnvironmentParseException, "Invalid range: #{key}"
+        else
+          (start..stop).each do |index|
+            environment.register_socket(socket_type.new, index)
+          end
+        end
+      else
+        raise TodeeEnvironmentParseException, "Unrecognized specification: #{key}"
+      end
     end
     
     return environment

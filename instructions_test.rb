@@ -110,4 +110,28 @@ describe Instruction, "various instructions" do
     context_mock.should_not_receive(:turn_left)
     TNLInstruction.new.execute(context_mock, 0, nil)
   end
+  
+  it "should handle JMP" do
+    context_mock = mock("context")
+    context_mock.should_receive(:jump).with(5)
+    JMPInstruction.new.execute(context_mock, 5, nil)
+  end
+  
+  it "should handle CAL" do
+    context_mock = mock("context")
+    context_mock.should_receive(:call_jump).with(6)
+    CALInstruction.new.execute(context_mock, 6, nil)
+  end
+  
+  it "should handle RET" do
+    context_mock = mock("context")
+    context_mock.should_receive(:return_jump)
+    RETInstruction.new.execute(context_mock, nil, nil)
+  end
+  
+  it "should handle DRP" do
+    context_mock = mock("context")
+    context_mock.should_receive(:drop_call)
+    DRPInstruction.new.execute(context_mock, nil, nil)
+  end  
 end

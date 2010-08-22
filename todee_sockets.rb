@@ -22,6 +22,24 @@ class MemorySocket
   end
 end
 
+class ScopeMemorySocket < MemorySocket
+  def initialize()
+    @stack = []
+  end
+  
+  def push_call()
+    @stack.push(@value)
+  end
+  
+  def pop_call()
+    @value = @stack.pop() if @stack.size > 0
+  end
+  
+  def drop_call()
+    @stack.pop()
+  end
+end
+
 class QueueSocket
   def initialize()
     @queue = []

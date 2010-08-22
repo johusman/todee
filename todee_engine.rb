@@ -4,7 +4,8 @@ require 'todee_code_utils'
 class ExecutionContext
   attr_reader :instruction_pointer, :stopped, :bounds
   
-  def initialize(bounds)
+  def initialize(bounds, environment)
+    @state_stack = []
     @instruction_pointer = [0, 0] # row, column
     @direction = [1, 0] # row, column
     @stopped = false
@@ -12,6 +13,8 @@ class ExecutionContext
     
     # 0 = down, 1 = right, 2 = up, 3 = left
     @directions = [[1, 0], [0, 1], [-1, 0], [0, -1]] # row, column
+    
+    @environment = environment
   end
   
   def turn_to(direction)
@@ -43,17 +46,59 @@ class ExecutionContext
     @instruction_pointer = [0, 0]
     @direction = [1, 0]
   end
+  
+  def jump(distance)
+    return if distance == 0
+    distance -= 1 # because advance() will be called after this
+    advance_one_dimension_by(0, distance * @direction[0])
+    advance_one_dimension_by(1, distance * @direction[1])
+  end
+  
+  def call_jump(distance)
+    push_state()
+    jump(distance)
+  end
+  
+  def return_jump()
+    pop_state()
+  end
+  
+  def drop_call()
+    drop_state()
+  end
 
 private
 
   def advance_one_dimension(dim)
-    @instruction_pointer[dim] += @direction[dim]
-    if @instruction_pointer[dim] >= @bounds[dim] then
-      @instruction_pointer[dim] -= @bounds[dim]
-    elsif @instruction_pointer[dim] < 0 then
-      @instruction_pointer[dim] += @bounds[dim]
-    end
+    advance_one_dimension_by(dim, @direction[dim])
   end
+  
+  def advance_one_dimension_by(dim, distance)
+    @instruction_pointer[dim] += distance
+    @instruction_pointer[dim] %= @bounds[dim]
+  end
+  
+  def push_state()
+    #$stderr.puts("Pushing state stack: #{{ :pointer => @instruction_pointer, :direction => @direction }}")
+    @state_stack.push({ :pointer => Array.new(@instruction_pointer), :direction => Array.new(@direction) })
+    @environment.push_call()
+  end
+  
+  def pop_state()
+    state = @state_stack.pop()
+    #$stderr.puts("Popping state stack: #{state}")
+    if state then
+      @instruction_pointer = state[:pointer]
+      @direction = state[:direction]
+    end
+    @environment.pop_call()
+  end
+  
+  def drop_state()
+    @state_stack.pop()
+    #$stderr.puts("Dropping state stack: #{state}")
+    @environment.drop_call()
+  end  
 end
 
 class Engine
@@ -65,7 +110,7 @@ class Engine
   end
   
   def execute_all(code)
-    @context = ExecutionContext.new([code.size, code[0].size])
+    @context = ExecutionContext.new([code.size, code[0].size], @environment)
     instructions_executed = 0
     while not @context.stopped do
       execute(code[@context.instruction_pointer[0]][@context.instruction_pointer[1]])

@@ -108,3 +108,45 @@ describe TodeeEnvironment, "dereferencing arguments" do
     [0, 1, 2, 3].map {|x| @environment.read(x)}.should == [13, 37, 71, 1]
   end
 end
+
+describe TodeeEnvironment, "handling call push and pop" do
+  before do
+    @environment = TodeeEnvironment.new
+    @environment.register_socket(MemorySocket.new, 0)
+    @environment.register_socket(ScopeMemorySocket.new, 1)
+  end
+  
+  it "should handle call push and pop for sockets that support that" do
+    @environment.write(0, 15)
+    @environment.write(1, 23)
+    @environment.push_call()
+    @environment.read(0).should == 15
+    @environment.read(1).should == 23
+    
+    @environment.write(1, 41)
+    @environment.read(1).should == 41
+    
+    @environment.pop_call()
+    @environment.read(0).should == 15
+    @environment.read(1).should == 23
+  end
+  
+  it "should handle call drop" do
+    @environment.write(0, 15)
+    @environment.write(1, 23)
+    @environment.push_call()
+    @environment.read(0).should == 15
+    @environment.read(1).should == 23
+    
+    @environment.write(1, 41)
+    @environment.read(1).should == 41
+    
+    @environment.drop_call()
+    @environment.read(0).should == 15
+    @environment.read(1).should == 41
+    
+    @environment.pop_call()
+    @environment.read(0).should == 15
+    @environment.read(1).should == 41
+  end
+end

@@ -55,5 +55,24 @@ class TodeeEnvironment
       
       write(address, value)
     end
-  end  
+  end
+  
+  def push_call()
+    delegate_to_applicable(:push_call)
+  end
+  
+  def pop_call()
+    delegate_to_applicable(:pop_call)
+  end
+  
+  def drop_call()
+    delegate_to_applicable(:drop_call)
+  end
+  
+private
+  def delegate_to_applicable(method)
+    @sockets.each() do |socket|
+      socket.send(method) if socket.respond_to?(method)
+    end
+  end
 end

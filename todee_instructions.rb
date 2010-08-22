@@ -49,6 +49,42 @@ class TNLInstruction < Instruction
   def num_args() 1; end
 end
 
+class JMPInstruction < Instruction
+  def execute(context, value, dummy)
+    context.jump(int(value))
+  end
+
+  def takes_target() false; end
+  def num_args() 1; end
+end
+
+class CALInstruction < Instruction
+  def execute(context, value, dummy)
+    context.call_jump(int(value))
+  end
+
+  def takes_target() false; end
+  def num_args() 1; end
+end
+
+class RETInstruction < Instruction
+  def execute(context, dummy1, dummy2)
+    context.return_jump()
+  end
+
+  def takes_target() false; end
+  def num_args() 0; end
+end
+
+class DRPInstruction < Instruction
+  def execute(context, dummy1, dummy2)
+    context.drop_call()
+  end
+
+  def takes_target() false; end
+  def num_args() 0; end
+end
+
 class ADDInstruction < Instruction
   def execute(context, value1, value2)
     int(value1) + int(value2)

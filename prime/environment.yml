@@ -1,7 +1,8 @@
 TodeeEnvironment:
   0: Stdio
-  1: Memory # index
+  1: Scope # index
   2: Queue  # computed primes
   3: Memory # target value
-  4: Memory # working buffer
+  4: Scope # working buffer
   5: Memory # prime flag
+  6: Stack  # general purpose stack
