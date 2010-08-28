@@ -1,4 +1,4 @@
 TodeeEnvironment:
-  0: Stdout
+  0: Stdio
   1: Stack
   2: Memory

@@ -9,19 +9,19 @@
 #  2 = memory socket
 
 mov %1, 10      # Single line feed for unix systems
-mov %1, '!'
 mov %1, 'd'
 mov %1, 'l'
 mov %1, 'r'
 mov %1, 'o'
 mov %1, 'w'
 mov %1, ' '
+mov %1, ','
 mov %1, 'o'
 mov %1, 'l'
 mov %1, 'l'
 mov %1, 'e'
 mov %1, 'h'
-TUR 0		TNL 1
+|v|	        |<|
 mov %2, %1	mov %0, %2
-TNL %2		TNL 1
+TNL %2		|^|
 STP 
