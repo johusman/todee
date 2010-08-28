@@ -1,0 +1,7 @@
+Todee is a two-dimensional assembly-like byte code virtual machine and language.
+See more at http://projects.ztream.highrad.org
+
+Todee is in an early stage of development and everything about the language is
+subject to change.
+
+This is version 20100829

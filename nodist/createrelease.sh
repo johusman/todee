@@ -1,10 +1,15 @@
 #!/bin/sh
 
+version=$(date +%Y%m%d)
+release="todee$version"
+
+head -n-1 about.txt > /tmp/about.txt
+cp /tmp/about.txt about.txt
+echo "This is version $version" >> about.txt
+
 if [ ! -e nodist/releases ]; then
 	mkdir nodist/releases
 fi
-
-release="todee$(date +%Y%m%d)"
 
 if [ ! -e "nodist/releases/$release" ]; then
 	mkdir nodist/releases/$release
