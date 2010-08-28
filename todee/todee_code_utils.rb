@@ -1,5 +1,5 @@
-require 'todee_codepoint'
-require 'todee_instructions'
+require 'todee/todee_codepoint'
+require 'todee/todee_instructions'
 
 
 module CodeUtils

@@ -1,4 +1,4 @@
-require 'todee_instructions'
+require 'todee/todee_instructions'
 
 describe Instruction, "various instructions" do
   it "should handle ADD" do

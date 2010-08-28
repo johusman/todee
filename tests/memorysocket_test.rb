@@ -1,4 +1,4 @@
-require 'todee_sockets'
+require 'todee/todee_sockets'
 
 describe MemorySocket, "stores one value" do
   before do

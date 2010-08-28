@@ -1,5 +1,5 @@
-require 'todee_sockets'
-require 'todee_environment'
+require 'todee/todee_sockets'
+require 'todee/todee_environment'
 require 'yaml'
 
 class TodeeEnvironmentParseException < Exception; end

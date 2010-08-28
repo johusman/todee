@@ -1,5 +1,5 @@
-require 'todee_codepoint'
-require 'todee_code_utils'
+require 'todee/todee_codepoint'
+require 'todee/todee_code_utils'
 
 class TodeeParseException < Exception; end
 

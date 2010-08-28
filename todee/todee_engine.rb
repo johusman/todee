@@ -1,5 +1,5 @@
-require 'todee_instructions'
-require 'todee_code_utils'
+require 'todee/todee_instructions'
+require 'todee/todee_code_utils'
 
 class ExecutionContext
   attr_reader :instruction_pointer, :stopped, :bounds

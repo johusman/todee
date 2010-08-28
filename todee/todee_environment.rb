@@ -1,4 +1,4 @@
-require 'todee_sockets'
+require 'todee/todee_sockets'
 
 class TodeeEnvironment
   def initialize()

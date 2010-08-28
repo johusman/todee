@@ -1,4 +1,4 @@
-require 'todee_sockets'
+require 'todee/todee_sockets'
 
 describe ScopeMemorySocket, "behaves like MemorySocket" do
   before do

@@ -1,5 +1,5 @@
-require 'todee_sockets'
-require 'todee_environment'
+require 'todee/todee_sockets'
+require 'todee/todee_environment'
 
 describe TodeeEnvironment, "handling registration of sockets" do
   before do

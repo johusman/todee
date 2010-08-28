@@ -1,4 +1,4 @@
-require 'todee_parser'
+require 'todee/todee_parser'
 
 describe TodeeParser, "parsing normal single code points" do
   before do

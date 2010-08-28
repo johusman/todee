@@ -1,5 +1,5 @@
-require 'todee_environment_parser'
-require 'todee_sockets'
+require 'todee/todee_environment_parser'
+require 'todee/todee_sockets'
 
 describe TodeeEnvironmentParser, "parsing environment file" do
   before do

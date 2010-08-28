@@ -1,7 +1,7 @@
-require 'todee_sockets'
-require 'todee_engine'
-require 'todee_parser'
-require 'todee_environment_parser'
+require 'todee/todee_sockets'
+require 'todee/todee_engine'
+require 'todee/todee_parser'
+require 'todee/todee_environment_parser'
 
 if ARGV.size < 2 then
   puts "Usage: todee <environment file> <source file>"
