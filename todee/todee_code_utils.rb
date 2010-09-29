@@ -24,24 +24,35 @@ module CodeDSL
 
   class ::Fixnum
     def ref()
-      Argument.new(self, true)
+      Argument.new(self, 1)
+    end
+  end
+  
+  class ::Argument
+    def ref()
+      Argument.new(self.value, self.ref_level + 1)
     end
   end
 
   
   def internal_handle_args(args)
     args.map do |arg|
-      if not arg.instance_of?(Argument)
-	arg = arg[0] if arg.instance_of?(String)
-	Argument.new(arg, false)
-      else
-	arg
-      end
+      internal_handle_arg(arg)
+    end
+  end
+  
+  def internal_handle_arg(arg)
+    return nil if arg == nil
+    if not arg.instance_of?(Argument)
+      arg = arg[0] if arg.instance_of?(String)
+      Argument.new(arg, 0)
+    else
+      arg
     end
   end
 
   def internal_construct_codepoint(op, dest, args)
-    CodePoint.new(op, dest, internal_handle_args(args))
+    CodePoint.new(op, internal_handle_arg(dest), internal_handle_args(args))
   end
 
   def TUR(*args)
@@ -64,6 +75,22 @@ module CodeDSL
     internal_construct_codepoint(:NOP, nil, [])
   end
 
+  def JMP(*args)
+    internal_construct_codepoint(:JMP, nil, args)
+  end
+
+  def CAL(*args)
+    internal_construct_codepoint(:CAL, nil, args)
+  end
+
+  def RET()
+    internal_construct_codepoint(:RET, nil, [])
+  end
+
+  def DRP()
+    internal_construct_codepoint(:DRP, nil, [])
+  end
+  
   def ADD(dest, *args)
     internal_construct_codepoint(:ADD, dest, args)
   end
@@ -80,6 +107,10 @@ module CodeDSL
     internal_construct_codepoint(:DIV, dest, args)
   end
 
+  def REM(dest, *args)
+    internal_construct_codepoint(:REM, dest, args)
+  end  
+  
   def NEG(dest, *args)
     internal_construct_codepoint(:NEG, dest, args)
   end
