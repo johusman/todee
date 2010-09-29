@@ -1,5 +1,6 @@
 require 'todee/todee_instructions'
 require 'todee/todee_code_utils'
+require 'todee/todee_listener_base'
 
 class ExecutionContext
   attr_reader :instruction_pointer, :stopped, :bounds
@@ -104,16 +105,22 @@ end
 class Engine
   include CodeUtils
   
-  def initialize(environment)
+  def initialize(environment, listener = TodeeListenerBase::NULL)
     @environment = environment
+    @listener = listener
     @NOP = NOPInstruction.new
-  end
+  end  
   
   def execute_all(code)
     @context = ExecutionContext.new([code.size, code[0].size], @environment)
     instructions_executed = 0
     while not @context.stopped do
-      execute(code[@context.instruction_pointer[0]][@context.instruction_pointer[1]])
+      row = @context.instruction_pointer[0]
+      col = @context.instruction_pointer[1]
+      code_point = code[row][col]
+      @listener.pre_execute(row, col, code_point)
+      execute(code_point)
+      @listener.post_execute(row, col, code_point)
       @context.advance()
       #sleep(0.01)
       instructions_executed += 1
@@ -127,11 +134,11 @@ private
     instruction = code_point.instruction_symbol ? get_instruction(code_point.instruction_symbol) : @NOP
     raise "#{code_point.instruction_symbol} is not a valid instruction!" if not instruction
     
-    arguments = code_point.arguments.map {|arg| @environment.deref_read(arg.value, arg.ref_level) }
+    arguments = code_point.arguments.map {|arg| @environment.deref_read(arg.value, arg.ref_level, @listener)}
     return_value = instruction.execute(@context, arguments[0], arguments[1])
     target = code_point.target
     if target then
-      @environment.deref_write(target.value, target.ref_level, return_value)
+      @environment.deref_write(target.value, target.ref_level, return_value, @listener)
     end
   end
 end
