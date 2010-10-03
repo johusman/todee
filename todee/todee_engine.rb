@@ -105,24 +105,33 @@ end
 class Engine
   include CodeUtils
   
-  def initialize(environment, listener = TodeeListenerBase::NULL)
+  def initialize(environment, code, listener = TodeeListenerBase::NULL)
     @environment = environment
+    @code = code
     @listener = listener
     @NOP = NOPInstruction.new
+    @context = nil
   end  
   
-  def execute_all(code)
-    @context = ExecutionContext.new([code.size, code[0].size], @environment)
+  def execute_all()
+    @context = ExecutionContext.new([@code.size, @code[0].size], @environment)
     instructions_executed = 0
     while not @context.stopped do
-      row = @context.instruction_pointer[0]
-      col = @context.instruction_pointer[1]
-      code_point = code[row][col]
-      @listener.pre_execute(row, col, code_point)
-      execute(code_point)
-      @listener.post_execute(row, col, code_point)
-      @context.advance()
-      #sleep(0.01)
+      execute_next()
+      instructions_executed += 1
+    end
+    
+    return instructions_executed
+  end
+  
+  def execute_some(count)
+    @context = ExecutionContext.new([@code.size, @code[0].size], @environment) if not @context
+    instructions_executed = 0
+    count.times() do
+      if @context.stopped then
+        return instructions_executed
+      end
+      execute_next()
       instructions_executed += 1
     end
     
@@ -130,6 +139,17 @@ class Engine
   end
   
 private  
+
+  def execute_next()
+    row = @context.instruction_pointer[0]
+    col = @context.instruction_pointer[1]
+    code_point = @code[row][col]
+    @listener.pre_execute(row, col, code_point)
+    execute(code_point)
+    @listener.post_execute(row, col, code_point)
+    @context.advance()
+  end
+  
   def execute(code_point)
     instruction = code_point.instruction_symbol ? get_instruction(code_point.instruction_symbol) : @NOP
     raise "#{code_point.instruction_symbol} is not a valid instruction!" if not instruction
