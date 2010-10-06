@@ -228,7 +228,7 @@ class FlipBlockMutation < Mutation
     row1, row2 = row2, row1 if row1 > row2
     col1, col2 = col2, col1 if col1 > col2
 
-    flip!(code, row1, col1, row2, col2)
+    flip!(candidate.code, row1, col1, row2, col2)
 
     return candidate;
   end
@@ -246,6 +246,19 @@ class FlipBlockHorizontallyMutation < FlipBlockMutation
 end
 
 class FlipBlockVerticallyMutation < FlipBlockMutation
+  def flip!(code, row1, col1, row2, col2)
+    reversed_code = code[row1..row2].map{|row| row.clone()}.reverse
+    puts '##############'
+    puts TodeeDecompiler.new.decompile_matrix(reversed_code)
+    for row_i in row1..row2 do
+      for col_i in col1..col2 do
+        code[row_i][col_i] = reversed_code[row_i-row1][col_i]
+      end
+    end
+    puts '###############'
+    puts TodeeDecompiler.new.decompile_matrix(reversed_code)
+    puts '##############'
+  end
 end
 
 mutation = RemoveColumnMutation.new()
@@ -259,13 +272,15 @@ candidate = CodeCandidate.new(code)
 
 mutations = [RemoveColumnMutation.new(), RemoveRowMutation.new(), DuplicateColumnMutation.new(), DuplicateRowMutation.new(), InstructionMutation.new(0, 6), TargetMutation.new(0, 6), ArgumentMutation.new(0, 6, 0.2)]
 
-rand(5).times() do
-  mutations.each do |mutation|
-    if rand(10) == 0 then
+mutation = FlipBlockVerticallyMutation.new
+
+#rand(5).times() do
+#  mutations.each do |mutation|
+#    if rand(10) == 0 then
       candidate = mutation.mutate(candidate)
-    end
-  end
-end
+#    end
+#  end
+#end
 
 File.open('/tmp/mutated.2d', 'w') do |file|
   file.puts TodeeDecompiler.new.decompile_matrix(candidate.code)
