@@ -31,7 +31,7 @@ class AbstractCodePointMutation < Mutation
     
     code_point = code_points[rand(code_points.size)]
     
-    mutate_code_point!(code_point)
+    mutate_code_point!(code_point) if code_point
     
     return candidate
   end
@@ -142,7 +142,7 @@ class DuplicateRowMutation < Mutation
     code = candidate.code
     
     row_index = rand(code.size)
-    new_row = code[row_index].map {|code_point| code_point.copy()}
+    new_row = code[row_index].map {|code_point| code_point ? code_point.copy() : nil}
     code.insert(row_index, new_row)
     
     return candidate
@@ -153,7 +153,9 @@ class RemoveRowMutation < Mutation
   def mutate(candidate)
     candidate = super(candidate)
     
-    candidate.code.delete_at(rand(candidate.code.size))
+    if candidate.code.size > 1 then
+        candidate.code.delete_at(rand(candidate.code.size))
+    end
     
     return candidate
   end
@@ -179,10 +181,11 @@ class RemoveColumnMutation < Mutation
     candidate = super(candidate)
     
     code = candidate.code
-    
-    column_index = rand(code[0].size)
-    code.each do |row|
-      row.delete_at(column_index)
+    if code[0].size > 1 then
+        column_index = rand(code[0].size)
+        code.each do |row|
+          row.delete_at(column_index)
+        end
     end
     
     return candidate
@@ -205,8 +208,10 @@ class SwitchColumnsMutation < Mutation
     candidate = super(candidate)
     index1 = rand(candidate.code[0].size)
     index2 = rand(candidate.code[0].size)
-    candidate.code.each do |row|
-      row[index1], row[index2] = row[index2], row[index1]
+    if index1 != index2 then
+        candidate.code.each do |row|
+          row[index1], row[index2] = row[index2], row[index1]
+        end
     end
 
     return candidate;
@@ -234,6 +239,7 @@ class FlipBlockMutation < Mutation
   end
 
   def flip!(code, row1, col1, row2, col2)
+    raise "This class should be subclassed"
   end
 end
 
@@ -248,20 +254,13 @@ end
 class FlipBlockVerticallyMutation < FlipBlockMutation
   def flip!(code, row1, col1, row2, col2)
     reversed_code = code[row1..row2].map{|row| row.clone()}.reverse
-    puts '##############'
-    puts TodeeDecompiler.new.decompile_matrix(reversed_code)
     for row_i in row1..row2 do
       for col_i in col1..col2 do
         code[row_i][col_i] = reversed_code[row_i-row1][col_i]
       end
     end
-    puts '###############'
-    puts TodeeDecompiler.new.decompile_matrix(reversed_code)
-    puts '##############'
   end
 end
-
-mutation = RemoveColumnMutation.new()
 
 code = TodeeParser.new.parse_file(File.new(ARGV[0]))
 File.open('/tmp/original.2d', 'w') do |file|
@@ -270,17 +269,31 @@ end
 
 candidate = CodeCandidate.new(code)
 
-mutations = [RemoveColumnMutation.new(), RemoveRowMutation.new(), DuplicateColumnMutation.new(), DuplicateRowMutation.new(), InstructionMutation.new(0, 6), TargetMutation.new(0, 6), ArgumentMutation.new(0, 6, 0.2)]
+mutations = {RemoveColumnMutation.new() => 0.1, RemoveRowMutation.new() => 0.1, DuplicateColumnMutation.new() => 0.1, DuplicateRowMutation.new() => 0.1, InstructionMutation.new(0, 6) => 0.5, TargetMutation.new(0, 6) => 0.5, ArgumentMutation.new(0, 6, 0.2) => 0.5, SwitchRowsMutation.new() => 0.2, SwitchColumnsMutation.new() => 0.2, FlipBlockHorizontallyMutation.new() => 0.3, FlipBlockVerticallyMutation.new() => 0.3}
 
 mutation = FlipBlockVerticallyMutation.new
 
-#rand(5).times() do
-#  mutations.each do |mutation|
-#    if rand(10) == 0 then
+rand(100).times() do
+  mutations.each_pair do |mutation, probability|
+    if rand() < probability then
       candidate = mutation.mutate(candidate)
-#    end
-#  end
-#end
+      code = candidate.code
+        if code.size > 0 then
+          cols = code[0].size
+          code.each do |row|
+            if row.size != cols then
+              raise "Assertion error after #{mutation.class}: after parsing file, failed to pad all rows to same length"
+            end
+            row.each do |code_point|
+              if not code_point then
+                raise "Assertion error after #{mutation.class}: nil:s detected in code block after parsing"
+              end
+            end
+          end
+        end
+    end
+  end
+end
 
 File.open('/tmp/mutated.2d', 'w') do |file|
   file.puts TodeeDecompiler.new.decompile_matrix(candidate.code)
