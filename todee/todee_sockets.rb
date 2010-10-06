@@ -13,8 +13,12 @@ class StackSocket
 end
 
 class MemorySocket
+  def initialize()
+    @value = nil
+  end
+
   def read()
-    @value
+    defined?(@value) ? @value : nil
   end
   
   def write(value)
@@ -28,7 +32,8 @@ class ScopeMemorySocket < MemorySocket
   end
   
   def push_call()
-    @stack.push(@value)
+    
+    @stack.push(defined?(@value) ? @value : nil)
   end
   
   def pop_call()
@@ -89,8 +94,10 @@ class StdioSocket
   end
   
   def write(value)
-    $stdout.write(value.to_i.chr)
-    $stdout.flush
+    if value.to_i > 0 then
+        $stdout.write(value.to_i.chr)
+        $stdout.flush
+    end
   end
 end
 

@@ -39,6 +39,20 @@ class TodeeParser
       end
     end
     
+    if code.size > 0 then
+      cols = code[0].size
+      code.each do |row|
+        if row.size != cols then
+          raise "Assertion error: after parsing file, failed to pad all rows to same length"
+        end
+        row.each do |code_point|
+          if not code_point then
+            raise "Assertion error: nil:s detected in code block after parsing"
+          end
+        end
+      end
+    end
+
     return code
   end
 
