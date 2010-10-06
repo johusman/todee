@@ -177,6 +177,8 @@ class TodeeFXWindow < FXMainWindow
       "darkgreen"
     when :CAL, :JMP, :RET, :DRP
       "darkred"
+    when :STP
+      "red"
     else
       "darkgray"
     end
@@ -207,7 +209,7 @@ class TodeeFXWindow < FXMainWindow
   def drawturn(dc, x, y, arg)
     if arg.ref_level == 0 then
       dc.foreground = "black"
-      case arg.value
+      case arg.value % 4
       when 0
         dc.drawLines([FXPoint.new(x+@cp_size/2, y+1), FXPoint.new(x+@cp_size-2, y+@cp_size/2), FXPoint.new(x+@cp_size/2, y+@cp_size-2)])
       when 1

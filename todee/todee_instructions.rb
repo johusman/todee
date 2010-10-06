@@ -24,7 +24,7 @@ end
 
 class TURInstruction < Instruction
   def execute(context, value, dummy)
-    context.turn_to(value)
+    context.turn_to(value % 4)
   end
 
   def takes_target() false; end
