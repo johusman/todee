@@ -14,10 +14,14 @@ class Candidate
 end
 
 class AscendEngine
-  def initialize(mutations, offspring_per_candidate, &fitness_function)
-    @mutations = mutations
+  def initialize(offspring_per_candidate, &fitness_function)
+    @mutations = {}
     @offspring_per_candidate
     @fitness_function = fitness_function
+  end
+
+  def add_mutation(mutation, probability)
+    @mutations[mutation] = probability
   end
   
   def evolve(original_candidate, generations)
@@ -39,8 +43,8 @@ class AscendEngine
     
     mutated_offspring = offspring.map do |child|
       rand(5).times() do
-        @mutations.each do |mutation|
-          if rand(10) == 0 then
+        @mutations.each_pair do |mutation, probability|
+          if rand() < probability then
             child = mutation.mutate(child)
           end
         end
