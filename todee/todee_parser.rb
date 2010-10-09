@@ -170,21 +170,15 @@ private
   def parse_param(param)
     param = param.strip
     
-    if not param.match(/^((%{1,2}|-)?[0-9]+)|('[^']?')$/) then
+    if not param.match(/^((%+|-)?[0-9]+)|('[^']?')$/) then
       return nil
     end
     
     ref_level = 0
-    metaref_match = param.match(/^%%(.*)/)
+    metaref_match = param.match(/^(%+)(.*)/)
     if metaref_match then
-      ref_level = 2
-      param = metaref_match[1]
-    else
-      ref_match = param.match(/^%(.*)/)
-      if ref_match then
-        ref_level = 1
-        param = ref_match[1]
-      end
+      ref_level = metaref_match[1].size
+      param = metaref_match[2]
     end
     
     quote_match = param.match(/^'([^']?)'$/)
