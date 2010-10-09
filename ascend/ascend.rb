@@ -1,3 +1,5 @@
+require 'benchmark'
+
 class Mutation
   def mutate(candidate)
     if not candidate.respond_to?(:copy) then
@@ -16,7 +18,7 @@ end
 class AscendEngine
   def initialize(offspring_per_candidate, &fitness_function)
     @mutations = {}
-    @offspring_per_candidate
+    @offspring_per_candidate = offspring_per_candidate
     @fitness_function = fitness_function
   end
 
@@ -25,11 +27,23 @@ class AscendEngine
   end
   
   def evolve(original_candidate, generations)
-    candidate_with_score = { :candidate => original_candidate, :score => @fitness_function.call(child) }
+    generation = 1
+    candidate_with_score = { :candidate => original_candidate, :score => @fitness_function.call(original_candidate) }
     generations.times() do
-      offspring = reproduce_and_mutate(candidate_with_score[:candidate])
-      offspring_with_score = offspring.map { |child| { :candidate => child, :score => @fitness_function.call(child) } }
-      candidate_with_score = offspring_with_score.inject(candidate_with_score) { |best, tuple| tuple[:score] > best[:score] ? tuple : best }
+      print "##{generation}: "
+      offspring = nil
+      mutate_benchmark = Benchmark.measure do
+        offspring = reproduce_and_mutate(candidate_with_score[:candidate])
+      end
+      offspring_with_score = nil
+      fitness_benchmark = Benchmark.measure do
+        offspring_with_score = offspring.map { |child| { :candidate => child, :score => @fitness_function.call(child) } }
+      end
+      candidate_with_score[:score] = @fitness_function.call(candidate_with_score[:candidate])
+      candidate_with_score = offspring_with_score.inject(candidate_with_score) { |best, tuple| tuple[:score] >= best[:score] ? tuple : best }
+      selected_candidate = candidate_with_score[:candidate]
+      puts "Selecting #{selected_candidate} [#{selected_candidate.code.size*selected_candidate.code[0].size}] with score #{candidate_with_score[:score]};\t#{mutate_benchmark.real}"
+      generation += 1
     end
     
     return candidate_with_score[:candidate]
@@ -42,7 +56,7 @@ class AscendEngine
     end
     
     mutated_offspring = offspring.map do |child|
-      rand(5).times() do
+      (rand(3)+1).times() do
         @mutations.each_pair do |mutation, probability|
           if rand() < probability then
             child = mutation.mutate(child)

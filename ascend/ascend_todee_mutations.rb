@@ -16,21 +16,9 @@ end
 
 class AbstractCodePointMutation < Mutation
   def mutate(candidate)
-    candidate = super(candidate)
-    
     code = candidate.code
-    
-    code_points = []
-    code.each do |row|
-      row.each do |code_point|
-        code_points << code_point
-      end
-    end
-    
-    code_point = code_points[rand(code_points.size)]
-    
+    code_point = code[rand(code.size)][rand(code[0].size)]
     mutate_code_point!(code_point) if code_point
-    
     return candidate
   end
   
@@ -71,9 +59,9 @@ class ArgumentMutation < AbstractCodePointMutation
       value = rand(@highest_socket_address - @lowest_socket_address + 1) + @lowest_socket_address
     elsif ref_level == 0 and not change_reflevel then
       if rand(2) == 0 then
-        value += 2**rand(10)
+        value += 2**rand(4)
       else
-        value -= 2**rand(10)
+        value -= 2**rand(4)
       end
     end
     
@@ -135,8 +123,6 @@ end
 
 class DuplicateRowMutation < Mutation
   def mutate(candidate)
-    candidate = super(candidate)
-    
     code = candidate.code
     
     row_index = rand(code.size)
@@ -149,8 +135,6 @@ end
 
 class RemoveRowMutation < Mutation
   def mutate(candidate)
-    candidate = super(candidate)
-    
     if candidate.code.size > 1 then
         candidate.code.delete_at(rand(candidate.code.size))
     end
@@ -161,8 +145,6 @@ end
 
 class DuplicateColumnMutation < Mutation
   def mutate(candidate)
-    candidate = super(candidate)
-    
     code = candidate.code
     
     column_index = rand(code[0].size)
@@ -176,8 +158,6 @@ end
 
 class RemoveColumnMutation < Mutation
   def mutate(candidate)
-    candidate = super(candidate)
-    
     code = candidate.code
     if code[0].size > 1 then
         column_index = rand(code[0].size)
@@ -192,7 +172,6 @@ end
 
 class SwitchRowsMutation < Mutation
   def mutate(candidate)
-    candidate = super(candidate)
     index1 = rand(candidate.code.size)
     index2 = rand(candidate.code.size)
     candidate.code[index1], candidate.code[index2] = candidate.code[index2], candidate.code[index1]
@@ -203,7 +182,6 @@ end
 
 class SwitchColumnsMutation < Mutation
   def mutate(candidate)
-    candidate = super(candidate)
     index1 = rand(candidate.code[0].size)
     index2 = rand(candidate.code[0].size)
     if index1 != index2 then
@@ -218,7 +196,6 @@ end
 
 class FlipBlockMutation < Mutation
   def mutate(candidate)
-    candidate = super(candidate)
     width, height = candidate.code[0].size, candidate.code.size
 
     row1, col1 = rand(height), rand(width)
