@@ -27,10 +27,10 @@ class AscendEngine
   end
   
   def evolve(original_candidate, generations)
+    max_score = -10000000000
     generation = 1
     candidate_with_score = { :candidate => original_candidate, :score => @fitness_function.call(original_candidate) }
     generations.times() do
-      print "##{generation}: "
       offspring = nil
       mutate_benchmark = Benchmark.measure do
         offspring = reproduce_and_mutate(candidate_with_score[:candidate])
@@ -41,8 +41,11 @@ class AscendEngine
       end
       candidate_with_score[:score] = @fitness_function.call(candidate_with_score[:candidate])
       candidate_with_score = offspring_with_score.inject(candidate_with_score) { |best, tuple| tuple[:score] >= best[:score] ? tuple : best }
-      selected_candidate = candidate_with_score[:candidate]
-      puts "Selecting #{selected_candidate} [#{selected_candidate.code.size*selected_candidate.code[0].size}] with score #{candidate_with_score[:score]};\t#{mutate_benchmark.real}"
+      if candidate_with_score[:score] > max_score then
+        selected_candidate = candidate_with_score[:candidate]
+        puts "##{generation}: Selecting #{selected_candidate} [#{selected_candidate.code.size*selected_candidate.code[0].size}] with score #{candidate_with_score[:score]};\tmut:#{mutate_benchmark.real}\tfit:#{fitness_benchmark.real}"
+        max_score = candidate_with_score[:score]
+      end
       generation += 1
     end
     
