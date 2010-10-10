@@ -36,8 +36,6 @@ candidate = CodeCandidate.new(parsed_code)
 
 expected = "hello, world!"
 
-max_score = -100000
-
 engine = AscendEngine.new(:offspring_per_candidate => 5, :survivor_pool_size => 20, :candidate_ttl => 2) do |candidate|
   score = 0
   begin
@@ -60,11 +58,7 @@ engine = AscendEngine.new(:offspring_per_candidate => 5, :survivor_pool_size => 
   rescue
     score = -100000
   end
-  score = (score + 80 * (rand() - 0.5)).to_i
-  if score > max_score then
-    max_score = score
-  end
-  score
+  (score + 80 * (rand() - 0.5)).to_i
 end
 
 engine.on_new_survivors() do |generation, candidates, scores|
