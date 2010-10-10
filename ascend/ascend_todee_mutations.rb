@@ -84,17 +84,21 @@ end
 class InstructionMutation < AbstractCodePointMutation
   include CodeUtils
   
-  INSTRUCTIONS = [:TUR, :TNR, :TNL, :STP, :NOP, :JMP, :CAL, :RET,
+  INSTRUCTIONS = [:TUR, :TNR, :TNL, :STP, :JMP, :CAL, :RET,
                   :DRP, :ADD, :SUB, :MUL, :DIV, :REM, :NEG, :MOV,
                   :AND, :OR, :XOR, :NOT, :EQ, :NEQ, :LT, :GT]
   
-  def initialize(lowest_socket_address, highest_socket_address)
+  def initialize(lowest_socket_address, highest_socket_address, probability_of_nop)
     @lowest_socket_address = lowest_socket_address
     @highest_socket_address = highest_socket_address
+    @probability_of_nop = probability_of_nop
   end
   
   def mutate_code_point!(code_point)
-    new_instruction_symbol = INSTRUCTIONS[rand(INSTRUCTIONS.size)]
+    new_instruction_symbol = :NOP
+    if rand() > @probability_of_nop then
+      new_instruction_symbol = INSTRUCTIONS[rand(INSTRUCTIONS.size)]
+    end
     new_instruction = get_instruction(new_instruction_symbol)
     if new_instruction.takes_target then
       old_target = code_point.target
@@ -109,7 +113,7 @@ class InstructionMutation < AbstractCodePointMutation
     
     if new_instruction.num_args > code_point.arguments.size then
       (new_instruction.num_args - code_point.arguments.size).times() do
-        code_point.arguments << Argument.new(rand(64), 0)
+        code_point.arguments << Argument.new(rand(256), 0)
       end
     elsif new_instruction.num_args == 0 then
       code_point.arguments = []

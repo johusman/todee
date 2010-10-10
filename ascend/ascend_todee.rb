@@ -19,53 +19,84 @@ def run_candidate(candidate, socket)
   return todee_engine.execute_some(200)
 end
 
-#parsed_code = TodeeParser.new.parse_file(File.new(ARGV[0]))
-parsed_code = []
-5.times() do
-  row = []
+parsed_code = nil
+if ARGV.size > 0 then
+  parsed_code = TodeeParser.new.parse_file(File.new(ARGV[0]))
+else
+  parsed_code = []
   5.times() do
-    row << CodePoint::NOP
+    row = []
+    5.times() do
+      row << CodePoint::NOP
+    end
+    parsed_code << row
   end
-  parsed_code << row
 end
 candidate = CodeCandidate.new(parsed_code)
 
 expected = "hello, world!"
 
-engine = AscendEngine.new(10) do |candidate|
+max_score = -100000
+
+engine = AscendEngine.new(:offspring_per_candidate => 5, :survivor_pool_size => 20, :candidate_ttl => 2) do |candidate|
   score = 0
   begin
     socket = MySocket.new()
     executed = run_candidate(candidate, socket)
-    if executed < 200 then
-      score -= 10 * ((socket.stack.size - expected.size).abs/10)
-      score -= 50 * ((candidate.code.size * candidate.code[0].size)/100)
+    #if executed < 200 then
+      score -= 1 * (socket.stack.size - expected.size).abs
+      score -= (candidate.code.size * 0.5 + candidate.code[0].size * 0.5)
       for i in 0..(expected.size-1) do
-        score += 200 if socket.stack[i] and expected[i] == socket.stack[i] % 256
-        score += 50 if socket.stack.include?(expected[i])
+        if socket.stack[i] and expected[i] == socket.stack[i] % 256
+          score += 200
+        else
+          score += 2 if socket.stack.include?(expected[i])
+          break
+        end
       end
-    else
-      raise "Too many operations"
-    end
+    #else
+    #  raise "Too many operations"
+    #end
   rescue
     score = -100000
   end
-  score + 110 * (rand() - 0.5)
+  score = (score + 80 * (rand() - 0.5)).to_i
+  if score > max_score then
+    max_score = score
+  end
+  score
+end
+
+engine.on_new_survivors() do |generation, candidates, scores|
+  if generation % 50 == 0 then
+    print "\n##{generation} "
+  end
+  print " [#{scores[0].to_i}]"
+  $stdout.flush()
+end
+
+engine.on_new_highscore() do |generation, candidate, score|
+  print "*"
+  print 7.chr
+  $stdout.flush()
+  File.open("/tmp/mutated.#{score}.2d", 'w') do |file|
+    file.puts TodeeDecompiler.new.decompile_matrix(candidate.code)
+  end
 end
 
 engine.add_mutation(RemoveColumnMutation.new(), 0.1)
 engine.add_mutation(RemoveRowMutation.new(), 0.1)
 engine.add_mutation(DuplicateColumnMutation.new(), 0.1)
 engine.add_mutation(DuplicateRowMutation.new(), 0.1)
-engine.add_mutation(InstructionMutation.new(0, 2), 0.8)
+engine.add_mutation(InstructionMutation.new(0, 2, 0.2), 0.8)
 engine.add_mutation(TargetMutation.new(0, 2), 0.8)
-engine.add_mutation(ArgumentMutation.new(0, 2, 0.2), 0.8)
+engine.add_mutation(ArgumentMutation.new(0, 2, 0.3), 0.8)
 engine.add_mutation(SwitchRowsMutation.new(), 0.2)
 engine.add_mutation(SwitchColumnsMutation.new(), 0.2)
 engine.add_mutation(FlipBlockHorizontallyMutation.new(), 0.3)
 engine.add_mutation(FlipBlockVerticallyMutation.new(), 0.3)
 
-candidate = engine.evolve(candidate, 5000)
+candidate = engine.evolve(candidate, 10000)
                     
 File.open('/tmp/mutated.2d', 'w') do |file|
   file.puts TodeeDecompiler.new.decompile_matrix(candidate.code)
