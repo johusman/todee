@@ -1,6 +1,16 @@
 class Instruction
+  MIN = -2**64
+  MAX = 2**64
+
   def int(value)
-    (value or 0).to_i
+    val = (value or 0).to_i
+    if val > MAX then
+      val % MAX
+    elsif val < MIN then
+      val % MIN
+    else
+      val
+    end
   end
 end
 
