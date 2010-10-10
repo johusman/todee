@@ -7,13 +7,13 @@ require 'todee/todee_environment_parser'
 class VerboseStackSocket < StackSocket
   def read()
     value = super()
-    puts @stack.map {|a| a > 9 ? (a % 256).chr : '?'}.join('')
+    puts @stack.map {|a| a = a % 256; (a > 9 and a < 128) ? a.chr : '?'}.join('')
     return value
   end
 
   def write(value)
     super(value)
-    puts @stack.map {|a| a > 9 ? (a % 256).chr : '?'}.join('')
+    puts @stack.map {|a| a = a % 256; (a > 9 and a < 128) ? a.chr : '?'}.join('')
   end
 end
 
