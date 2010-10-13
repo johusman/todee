@@ -61,11 +61,11 @@ class AscendEngine
   def evolve(original_candidate, generations)
     max_score = nil
     generation = 1
-    best_lives = [Life.new(original_candidate, @candidate_ttl, @fitness_function.call(original_candidate))]
+    survivor_pool = [Life.new(original_candidate, @candidate_ttl, @fitness_function.call(original_candidate))]
     generations.times() do
       offspring_candidates = []
       mutate_benchmark = Benchmark.measure do
-        best_lives.each do |life|
+        survivor_pool.each do |life|
           offspring_candidates.concat(reproduce_and_mutate(life.candidate))
         end
       end
@@ -73,25 +73,25 @@ class AscendEngine
       offspring_lives = nil
       fitness_benchmark = Benchmark.measure do
         offspring_lives = offspring_candidates.map { |child| Life.new(child, @candidate_ttl, @fitness_function.call(child)) }
-        best_lives.each do |life|
+        survivor_pool.each do |life|
           if not life.time_to_die? then
             life.score = @fitness_function.call(life.candidate)
             offspring_lives << life
           end
         end
       end
-      best_lives = offspring_lives.sort() { |a, b| b.score <=> a.score }
-      best_lives = best_lives[0..(@survivor_pool_size-1)]
 
+      survivor_pool = select_survivors(offspring_lives) 
+      puts survivor_pool.map{|life| life.score}.join(', ')
       if defined? @on_new_survivors_block then
         if @on_new_survivors_block.arity == 4 then
-          @on_new_survivors_block.call(generation, best_lives.map{|life| life.candidate}, best_lives.map{|life| life.score}, {:mutation => mutate_benchmark.real, :fitness => fitness_benchmark.real})
+          @on_new_survivors_block.call(generation, survivor_pool.map{|life| life.candidate}, survivor_pool.map{|life| life.score}, {:mutation => mutate_benchmark.real, :fitness => fitness_benchmark.real})
         else
-          @on_new_survivors_block.call(generation, best_lives.map{|life| life.candidate}, best_lives.map{|life| life.score})
+          @on_new_survivors_block.call(generation, survivor_pool.map{|life| life.candidate}, survivor_pool.map{|life| life.score})
         end
       end
 
-      best_life = best_lives[0]
+      best_life = survivor_pool[0]
       if not max_score or best_life.score > max_score
         max_score = best_life.score
         if defined? @on_new_highscore_block then
@@ -101,7 +101,7 @@ class AscendEngine
       generation += 1
     end
     puts
-    return best_lives[0].candidate
+    return survivor_pool[0].candidate
   end
   
   def reproduce_and_mutate(candidate)
@@ -111,7 +111,7 @@ class AscendEngine
     end
     
     mutated_offspring = offspring.map do |child|
-      (rand(3)+1).times() do
+      (rand(2)+1).times() do
         @mutations.each_pair do |mutation, probability|
           if rand() < probability then
             child = mutation.mutate(child)
@@ -122,6 +122,33 @@ class AscendEngine
     end
     
     return mutated_offspring
+  end
+
+  def select_survivors(offspring_lives)
+    survivors = []
+    sorted_lives = offspring_lives.sort() { |a, b| b.score <=> a.score }
+ 
+    @survivor_pool_size.times() do
+      if sorted_lives.size > 1 then
+        score_min = sorted_lives.inject(sorted_lives[0].score) { |min, life| min > life.score ? life.score : min }
+        bias = -score_min
+        score_sum = sorted_lives.inject(0) { |sum, life| sum + life.score + bias }
+        cutoff = rand(score_sum)
+
+        index = 0
+        sub_sum = 0
+        while sub_sum < cutoff do
+          sub_sum += sorted_lives[index].score + bias
+          index += 1
+        end
+    
+        survivors << sorted_lives.delete_at(index-1)
+      elsif sorted_lives.size == 1 then
+        survivors << sorted_lives[0]
+        sorted_lives = []
+      end
+    end
+    return survivors.sort() { |a, b| b.score <=> a.score }
   end
 end
 

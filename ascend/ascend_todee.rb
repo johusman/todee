@@ -14,7 +14,9 @@ def run_candidate(candidate, socket)
   environment = TodeeEnvironment.new()
   environment.register_socket(socket, 0)
   environment.register_socket(MemorySocket.new(), 1)
-  environment.register_socket(StackSocket.new(), 2)
+  environment.register_socket(MemorySocket.new(), 2)
+  environment.register_socket(StackSocket.new(), 3)
+  environment.register_socket(QueueSocket.new(), 4)
   todee_engine = Engine.new(environment, candidate.code)
   return todee_engine.execute_some(200)
 end
@@ -34,31 +36,33 @@ else
 end
 candidate = CodeCandidate.new(parsed_code)
 
-expected = "hello, world!"
+#expected = [0, 1, 1, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765] #"hello, world!"
 
 engine = AscendEngine.new(:offspring_per_candidate => 5, :survivor_pool_size => 20, :candidate_ttl => 2) do |candidate|
-  score = 0
+  score = -(candidate.code.size + candidate.code[0].size)
   begin
     socket = MySocket.new()
     executed = run_candidate(candidate, socket)
     #if executed < 200 then
-      score -= 1 * (socket.stack.size - expected.size).abs
-      score -= (candidate.code.size * 0.5 + candidate.code[0].size * 0.5)
-      for i in 0..(expected.size-1) do
-        if socket.stack[i] and expected[i] == socket.stack[i] % 256
-          score += 200
+    matching = 0
+      fiba, fibb = 0, 1
+      for i in 0..100 do
+        if socket.stack[i] and fiba == socket.stack[i]
+          matching += 1
         else
-          score += 2 if socket.stack.include?(expected[i])
           break
         end
+        fiba, fibb = fibb, fiba+fibb
       end
+    score += 100 * (1.5**matching)
     #else
     #  raise "Too many operations"
     #end
   rescue
-    score = -100000
+    score = -100
   end
-  (score + 80 * (rand() - 0.5)).to_i
+  #(score + 80 * (rand() - 0.5)).to_i
+  score.to_i
 end
 
 engine.on_new_survivors() do |generation, candidates, scores|
@@ -82,15 +86,15 @@ engine.add_mutation(RemoveColumnMutation.new(), 0.1)
 engine.add_mutation(RemoveRowMutation.new(), 0.1)
 engine.add_mutation(DuplicateColumnMutation.new(), 0.1)
 engine.add_mutation(DuplicateRowMutation.new(), 0.1)
-engine.add_mutation(InstructionMutation.new(0, 2, 0.2), 0.8)
-engine.add_mutation(TargetMutation.new(0, 2), 0.8)
-engine.add_mutation(ArgumentMutation.new(0, 2, 0.3), 0.8)
+engine.add_mutation(InstructionMutation.new(0, 4, 0.2), 0.8)
+engine.add_mutation(TargetMutation.new(0, 4), 0.8)
+engine.add_mutation(ArgumentMutation.new(0, 4, 0.3), 0.8)
 engine.add_mutation(SwitchRowsMutation.new(), 0.2)
 engine.add_mutation(SwitchColumnsMutation.new(), 0.2)
 engine.add_mutation(FlipBlockHorizontallyMutation.new(), 0.3)
 engine.add_mutation(FlipBlockVerticallyMutation.new(), 0.3)
 
-candidate = engine.evolve(candidate, 10000)
+candidate = engine.evolve(candidate, 100000)
                     
 File.open('/tmp/mutated.2d', 'w') do |file|
   file.puts TodeeDecompiler.new.decompile_matrix(candidate.code)
