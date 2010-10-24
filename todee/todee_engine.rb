@@ -2,18 +2,27 @@ require 'todee/todee_instructions'
 require 'todee/todee_code_utils'
 require 'todee/todee_listener_base'
 
+class Vector2D
+  attr_reader :row, :col
+  attr_writer :row, :col
+
+  def initialize(row, col)
+    @row = row
+    @col = col
+  end
+end
+
 class ExecutionContext
   attr_reader :instruction_pointer, :stopped, :bounds
   
-  def initialize(bounds, environment)
+  def initialize(rows, cols, environment)
     @state_stack = []
-    @instruction_pointer = [0, 0] # row, column
-    @direction = [1, 0] # row, column
+    reset()
     @stopped = false
-    @bounds = bounds
+    @bounds = Vector2D.new(rows, cols)
     
     # 0 = down, 1 = right, 2 = up, 3 = left
-    @directions = [[1, 0], [0, 1], [-1, 0], [0, -1]] # row, column
+    @directions = [Vector2D.new(1, 0), Vector2D.new(0, 1), Vector2D.new(-1, 0), Vector2D.new(0, -1)] # row, column
     
     @environment = environment
   end
@@ -26,11 +35,11 @@ class ExecutionContext
   end
   
   def turn_left()
-    @direction = [ -@direction[1], @direction[0] ]
+    @direction = Vector2D.new(-@direction.col, @direction.row)
   end
   
   def turn_right()
-    @direction = [ @direction[1], -@direction[0] ]
+    @direction = Vector2D.new(@direction.col, -@direction.row)
   end
   
   def stop()
@@ -38,21 +47,18 @@ class ExecutionContext
   end
   
   def advance()
-    advance_one_dimension(0)
-    advance_one_dimension(1)
-    #puts "at: #{@instruction_pointer[0]}, #{@instruction_pointer[1]}"
+    advance_by(@direction.row, @direction.col)
   end
   
   def reset()
-    @instruction_pointer = [0, 0]
-    @direction = [1, 0]
+    @instruction_pointer = Vector2D.new(0, 0)
+    @direction = Vector2D.new(1, 0)
   end
   
   def jump(distance)
     return if distance == 0
     distance -= 1 # because advance() will be called after this
-    advance_one_dimension_by(0, distance * @direction[0])
-    advance_one_dimension_by(1, distance * @direction[1])
+    advance_by(distance * @direction.row, distance * @direction.col)
   end
   
   def call_jump(distance)
@@ -70,24 +76,20 @@ class ExecutionContext
 
 private
 
-  def advance_one_dimension(dim)
-    advance_one_dimension_by(dim, @direction[dim])
-  end
-  
-  def advance_one_dimension_by(dim, distance)
-    @instruction_pointer[dim] += distance
-    @instruction_pointer[dim] %= @bounds[dim]
+  def advance_by(rows, cols)
+    @instruction_pointer.row += rows
+    @instruction_pointer.col += cols
+    @instruction_pointer.row %= @bounds.row if @instruction_pointer.row >= @bounds.row or @instruction_pointer.row < 0
+    @instruction_pointer.col %= @bounds.col if @instruction_pointer.col >= @bounds.col or @instruction_pointer.col < 0
   end
   
   def push_state()
-    #$stderr.puts("Pushing state stack: #{{ :pointer => @instruction_pointer, :direction => @direction }}")
-    @state_stack.push({ :pointer => Array.new(@instruction_pointer), :direction => Array.new(@direction) })
+    @state_stack.push({ :pointer => @instruction_pointer.clone, :direction => @direction.clone })
     @environment.push_call()
   end
   
   def pop_state()
     state = @state_stack.pop()
-    #$stderr.puts("Popping state stack: #{state}")
     if state then
       @instruction_pointer = state[:pointer]
       @direction = state[:direction]
@@ -97,7 +99,6 @@ private
   
   def drop_state()
     @state_stack.pop()
-    #$stderr.puts("Dropping state stack: #{state}")
     @environment.drop_call()
   end  
 end
@@ -114,7 +115,7 @@ class Engine
   end  
   
   def execute_all()
-    @context = ExecutionContext.new([@code.size, @code[0].size], @environment)
+    @context = ExecutionContext.new(@code.size, @code[0].size, @environment)
     instructions_executed = 0
     while not @context.stopped do
       execute_next()
@@ -125,7 +126,7 @@ class Engine
   end
   
   def execute_some(count)
-    @context = ExecutionContext.new([@code.size, @code[0].size], @environment) if not @context
+    @context = ExecutionContext.new(@code.size, @code[0].size, @environment) if not @context
     instructions_executed = 0
     count.times() do
       if @context.stopped then
@@ -141,8 +142,8 @@ class Engine
 private  
 
   def execute_next()
-    row = @context.instruction_pointer[0]
-    col = @context.instruction_pointer[1]
+    row = @context.instruction_pointer.row
+    col = @context.instruction_pointer.col
     code_point = @code[row][col]
     @listener.pre_execute(row, col, code_point)
     execute(code_point)
