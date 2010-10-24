@@ -10,8 +10,19 @@ class Mutation
 end
 
 class Candidate
+  attr_writer :history
+  attr_reader :history
+
+  def initialize()
+    @counter = AscendCounter.new()
+    @history = [@counter.next]
+  end
+
   def copy()
-    return self.clone()
+    my_clone = self.clone()
+    my_clone.history = @history.clone
+    my_clone.history << @counter.next
+    return my_clone
   end
 end
 
@@ -28,6 +39,20 @@ class Life
   def time_to_die?()
     @ttl -= 1
     return @ttl == 0
+  end
+end
+
+class AscendCounter
+  attr_reader :id
+  attr_writer :id
+
+  def initialize()
+    @id = 0
+  end
+
+  def next()
+    @id += 1
+    @id
   end
 end
 
@@ -61,7 +86,9 @@ class AscendEngine
   def evolve(original_candidate, generations)
     max_score = nil
     generation = 1
+
     survivor_pool = [Life.new(original_candidate, @candidate_ttl, @fitness_function.call(original_candidate))]
+
     generations.times() do
       offspring_candidates = []
       mutate_benchmark = Benchmark.measure do
@@ -82,7 +109,6 @@ class AscendEngine
       end
 
       survivor_pool = select_survivors(offspring_lives) 
-      puts survivor_pool.map{|life| life.score}.join(', ')
       if defined? @on_new_survivors_block then
         if @on_new_survivors_block.arity == 4 then
           @on_new_survivors_block.call(generation, survivor_pool.map{|life| life.candidate}, survivor_pool.map{|life| life.score}, {:mutation => mutate_benchmark.real, :fitness => fitness_benchmark.real})
@@ -100,7 +126,6 @@ class AscendEngine
       end
       generation += 1
     end
-    puts
     return survivor_pool[0].candidate
   end
   
@@ -127,13 +152,15 @@ class AscendEngine
   def select_survivors(offspring_lives)
     survivors = []
     sorted_lives = offspring_lives.sort() { |a, b| b.score <=> a.score }
+
+    survivors << sorted_lives.delete_at(0)
  
-    @survivor_pool_size.times() do
+    (@survivor_pool_size-1).times() do
       if sorted_lives.size > 1 then
         score_min = sorted_lives.inject(sorted_lives[0].score) { |min, life| min > life.score ? life.score : min }
         bias = -score_min
         score_sum = sorted_lives.inject(0) { |sum, life| sum + life.score + bias }
-        cutoff = rand(score_sum)
+        cutoff = (score_sum > 0 ? rand(score_sum) : 0)
 
         index = 0
         sub_sum = 0

@@ -4,13 +4,17 @@ require 'todee/todee_code_utils'
 
 class CodeCandidate < Candidate
   attr_reader :code
+  attr_writer :code
   
   def initialize(code)
+    super()
     @code = code
   end
   
   def copy()
-    return CodeCandidate.new(@code.map {|row| row.map {|code_point| code_point ? code_point.copy() : nil}})
+    new_candidate = super()
+    new_candidate.code = @code.map {|row| row.map {|code_point| code_point ? code_point.copy() : nil}}
+    return new_candidate
   end
 end
 
