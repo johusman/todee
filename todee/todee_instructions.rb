@@ -1,6 +1,6 @@
 class Instruction
-  MIN = -2**64
-  MAX = 2**64
+  MIN = -2**62
+  MAX = 2**62
 
   def int(value)
     val = (value or 0).to_i
