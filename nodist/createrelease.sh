@@ -3,7 +3,7 @@
 version=$(date +%Y%m%d)
 release="todee$version"
 
-head -n-1 about.txt > /tmp/about.txt
+head -n  $(( $(wc -l about.txt | awk '{print $1}') - 1 )) about.txt > /tmp/about.txt
 cp /tmp/about.txt about.txt
 echo "This is version $version" >> about.txt
 
